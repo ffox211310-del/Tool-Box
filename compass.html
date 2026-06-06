@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=2.0">
+  <title>コンパス - ツールボックス</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(160deg, #1e2230 0%, #262b3a 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      padding: 1rem;
+      margin: 0;
+    }
+
+    .compass-container {
+      width: 100%;
+      max-width: 450px;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: 2.2rem;
+      padding: 1.8rem 1.6rem 2rem;
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .header-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 500;
+      color: #ecd9b4;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      text-shadow: 0 3px 8px rgba(0,0,0,0.4);
+    }
+
+    .home-button {
+      background: rgba(200, 180, 130, 0.12);
+      border: 1px solid rgba(220, 200, 140, 0.35);
+      color: #e8d5a3;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 0.55rem 1.3rem;
+      border-radius: 2.5rem;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      letter-spacing: 0.03em;
+      background-color: rgba(30, 32, 44, 0.7);
+    }
+
+    .home-button:hover {
+      background: rgba(220, 190, 110, 0.2);
+      border-color: rgba(240, 210, 120, 0.6);
+      color: #f7e6c4;
+      box-shadow: 0 0 12px rgba(200, 160, 70, 0.3);
+    }
+
+    /* コンパス円盤 */
+    .compass-face {
+      position: relative;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(40, 44, 58, 0.9), rgba(18, 20, 28, 0.95));
+      border: 2px solid rgba(220, 200, 140, 0.35);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 2px 8px rgba(255,255,255,0.05);
+      margin: 0.5rem 0;
+    }
+
+    /* 方位文字 */
+    .direction-label {
+      position: absolute;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #b9af8c;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.7);
+      transform: translate(-50%, -50%);
+    }
+    .north { top: 18px; left: 50%; color: #f0d78c; font-size: 1.6rem; }
+    .south { bottom: 14px; left: 50%; }
+    .east  { right: 14px; top: 50%; }
+    .west  { left: 14px; top: 50%; }
+
+    /* 目盛り線（簡易） */
+    .tick {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      width: 2px;
+      height: 20px;
+      background: rgba(255,255,255,0.15);
+      transform-origin: 50% 118px; /* 半径130px - 12px調整 */
+    }
+
+    /* 回転する針を含むレイヤー */
+    .needle-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.1s ease-out;
+    }
+
+    /* 北を示す針（上部） */
+    .needle-north {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 70px;
+      background: linear-gradient(to bottom, #f0d78c 40%, #b8942e);
+      border-radius: 2px;
+      box-shadow: 0 0 12px rgba(240, 210, 100, 0.8);
+      z-index: 2;
+    }
+    .needle-south {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 70px;
+      background: linear-gradient(to top, #7a6b4a 40%, #4a3f2a);
+      border-radius: 2px;
+      z-index: 2;
+    }
+    /* 中心の飾り */
+    .center-pivot {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 16px;
+      height: 16px;
+      background: radial-gradient(circle, #f0d78c, #8a7420);
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(0,0,0,0.8);
+      z-index: 3;
+    }
+
+    /* 角度表示 */
+    .angle-display {
+      font-size: 1.8rem;
+      font-weight: 300;
+      color: #f3e5c9;
+      background: rgba(18, 20, 28, 0.7);
+      padding: 0.5rem 2rem;
+      border-radius: 2rem;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+      letter-spacing: 0.04em;
+    }
+
+    .enable-btn {
+      background: rgba(200, 160, 70, 0.2);
+      border: 1px solid rgba(220, 180, 80, 0.4);
+      color: #ecd9b4;
+      padding: 0.8rem 2rem;
+      border-radius: 2rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.2s;
+      backdrop-filter: blur(8px);
+      margin-top: 0.3rem;
+    }
+    .enable-btn:active {
+      background: rgba(210, 150, 40, 0.4);
+    }
+
+    @media (max-width: 450px) {
+      .compass-face {
+        width: 220px;
+        height: 220px;
+      }
+      .angle-display {
+        font-size: 1.5rem;
+        padding: 0.4rem 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="compass-container">
+    <div class="header-row">
+      <h1>
+        <span>🧭</span> コンパス
+      </h1>
+      <a href="index.html" class="home-button">
+        <span>🏠</span> ホーム
+      </a>
+    </div>
+
+    <!-- コンパス本体 -->
+    <div class="compass-face" id="compassFace">
+      <div class="direction-label north">N</div>
+      <div class="direction-label south">S</div>
+      <div class="direction-label east">E</div>
+      <div class="direction-label west">W</div>
+      
+      <!-- 簡易目盛り (8方位分) -->
+      <div class="tick" style="transform: rotate(0deg)"></div>
+      <div class="tick" style="transform: rotate(45deg)"></div>
+      <div class="tick" style="transform: rotate(90deg)"></div>
+      <div class="tick" style="transform: rotate(135deg)"></div>
+      <div class="tick" style="transform: rotate(180deg)"></div>
+      <div class="tick" style="transform: rotate(225deg)"></div>
+      <div class="tick" style="transform: rotate(270deg)"></div>
+      <div class="tick" style="transform: rotate(315deg)"></div>
+
+      <!-- 回転する針 -->
+      <div class="needle-layer" id="needleLayer">
+        <div class="needle-north"></div>
+        <div class="needle-south"></div>
+      </div>
+      <div class="center-pivot"></div>
+    </div>
+
+    <!-- 角度表示 -->
+    <div class="angle-display" id="angleDisplay">--°</div>
+
+    <!-- 許可ボタン（必要な場合のみ表示） -->
+    <button class="enable-btn" id="enableBtn" style="display: none;">📍 方位を有効にする</button>
+    <div style="color:#8e95ab; font-size:0.8rem;" id="statusText"></div>
+  </div>
+
+  <script>
+    (function() {
+      const needleLayer = document.getElementById('needleLayer');
+      const angleDisplay = document.getElementById('angleDisplay');
+      const enableBtn = document.getElementById('enableBtn');
+      const statusText = document.getElementById('statusText');
+
+      let currentHeading = 0; // 0=北
+      let active = false;
+
+      // iOS 13+ の許可リクエスト
+      function requestPermission() {
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+          DeviceOrientationEvent.requestPermission()
+            .then(permissionState => {
+              if (permissionState === 'granted') {
+                startListening();
+              } else {
+                statusText.textContent = '方位の利用が許可されませんでした';
+              }
+            })
+            .catch(console.error);
+        } else {
+          // Android または古いiOS
+          startListening();
+        }
+      }
+
+      function startListening() {
+        window.addEventListener('deviceorientation', handleOrientation, true);
+        active = true;
+        enableBtn.style.display = 'none';
+        statusText.textContent = '';
+      }
+
+      function handleOrientation(event) {
+        let heading = null;
+        // iOS: webkitCompassHeading が利用可能
+        if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) {
+          heading = event.webkitCompassHeading;
+        } else if (event.alpha !== null) {
+          // Android: alpha は0=北を指すように調整が必要（端末による）
+          // 簡易的に alpha をそのまま使用（端末を水平にした状態でおおよそ北）
+          heading = 360 - event.alpha; // alpha は反時計回りの場合があるため調整
+          if (heading < 0) heading += 360;
+          heading = heading % 360;
+        }
+
+        if (heading !== null && !isNaN(heading)) {
+          currentHeading = heading;
+          updateUI();
+        }
+      }
+
+      function updateUI() {
+        needleLayer.style.transform = `rotate(${currentHeading}deg)`;
+        angleDisplay.textContent = `${Math.round(currentHeading)}°`;
+      }
+
+      // 自動で試みる（iOSでは requestPermission が必要だが、なければイベントは発火しない）
+      function init() {
+        if (typeof DeviceOrientationEvent !== 'undefined') {
+          if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            // iOS: ボタンを表示
+            enableBtn.style.display = 'block';
+            statusText.textContent = 'ボタンを押して方位を有効にしてください';
+          } else {
+            // Android 等：直接リスナー登録
+            startListening();
+          }
+        } else {
+          statusText.textContent = 'このデバイスは方位センサーに対応していません';
+        }
+      }
+
+      enableBtn.addEventListener('click', requestPermission);
+
+      // 初期化
+      init();
+      updateUI(); // 初期表示（0°）
+    })();
+  </script>
+</body>
+</html>
