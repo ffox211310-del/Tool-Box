@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>メモ - ツールボックス</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(160deg, #1e2230 0%, #262b3a 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      padding: 1.2rem;
+      margin: 0;
+    }
+
+    .memo-container {
+      width: 100%;
+      max-width: 600px;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: 2.2rem;
+      padding: 2rem 1.8rem 1.8rem;
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      display: flex;
+      flex-direction: column;
+      gap: 1.4rem;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 500;
+      color: #ecd9b4;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-shadow: 0 3px 8px rgba(0,0,0,0.4);
+    }
+
+    .home-button {
+      background: rgba(200, 180, 130, 0.12);
+      border: 1px solid rgba(220, 200, 140, 0.35);
+      color: #e8d5a3;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 0.55rem 1.3rem;
+      border-radius: 2.5rem;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      letter-spacing: 0.03em;
+      background-color: rgba(30, 32, 44, 0.7);
+    }
+
+    .home-button:hover {
+      background: rgba(220, 190, 110, 0.2);
+      border-color: rgba(240, 210, 120, 0.6);
+      color: #f7e6c4;
+      box-shadow: 0 0 12px rgba(200, 160, 70, 0.3);
+    }
+
+    textarea {
+      width: 100%;
+      height: 340px;
+      background: rgba(18, 20, 28, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 1.5rem;
+      padding: 1.2rem 1.3rem;
+      font-size: 1.05rem;
+      line-height: 1.6;
+      color: #f0e4cc;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      resize: vertical;
+      outline: none;
+      backdrop-filter: blur(4px);
+      transition: border 0.2s, box-shadow 0.2s;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    textarea:focus {
+      border-color: rgba(210, 180, 110, 0.55);
+      box-shadow: 0 0 18px rgba(190, 150, 50, 0.25), inset 0 1px 6px rgba(0,0,0,0.5);
+    }
+
+    textarea::placeholder {
+      color: #5f6980;
+      font-style: italic;
+      font-weight: 300;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #8e95ab;
+    }
+
+    .save-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: rgba(0,0,0,0.2);
+      padding: 0.3rem 0.9rem;
+      border-radius: 2rem;
+    }
+
+    .saved-text {
+      color: #b9af8c;
+    }
+
+    .clear-btn {
+      background: none;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #b4bdd4;
+      padding: 0.35rem 1rem;
+      border-radius: 2rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: 0.2s;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .clear-btn:hover {
+      background: rgba(220, 80, 80, 0.2);
+      border-color: rgba(230, 100, 100, 0.5);
+      color: #f5c6c6;
+    }
+
+    @media (max-width: 480px) {
+      .memo-container {
+        padding: 1.6rem 1.2rem;
+      }
+      textarea {
+        height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="memo-container">
+    <div class="header-row">
+      <h1>
+        <span>📝</span> メモ
+      </h1>
+      <!-- index.html に戻るボタン -->
+      <a href="index.html" class="home-button">
+        <span>🏠</span> ホーム
+      </a>
+    </div>
+
+    <!-- メモ入力エリア -->
+    <textarea id="memoTextarea" placeholder="ここにメモを入力...&#10;自動的に保存されます"></textarea>
+
+    <div class="status-row">
+      <div class="save-indicator" id="saveStatus">
+        <span>💾</span>
+        <span class="saved-text" id="statusMessage">保存済み</span>
+      </div>
+      <button class="clear-btn" id="clearButton">
+        🗑️ メモを消去
+      </button>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // ----- 定数 -----
+      const STORAGE_KEY = 'toolbox_memo_content';  // localStorage のキー
+      const textarea = document.getElementById('memoTextarea');
+      const statusMessage = document.getElementById('statusMessage');
+      const clearButton = document.getElementById('clearButton');
+
+      // ----- 保存処理 (localStorage) -----
+      function saveToStorage(content) {
+        try {
+          localStorage.setItem(STORAGE_KEY, content);
+          return true;
+        } catch (e) {
+          console.warn('localStorageへの保存に失敗しました', e);
+          return false;
+        }
+      }
+
+      // ----- 読み込み処理 -----
+      function loadFromStorage() {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          return saved !== null ? saved : '';
+        } catch (e) {
+          console.warn('localStorageからの読み込みに失敗', e);
+          return '';
+        }
+      }
+
+      // ----- ステータス表示を更新 -----
+      function updateStatus(text, isSaved = true) {
+        statusMessage.textContent = text;
+        // 少しだけ色を変えてもよいが、シンプルにテキストのみ
+        if (isSaved) {
+          statusMessage.style.color = '#b9af8c';
+        } else {
+          statusMessage.style.color = '#dba87e';
+        }
+      }
+
+      // ----- メモを保存してUIに反映 -----
+      function persistMemo() {
+        const content = textarea.value;
+        const success = saveToStorage(content);
+        if (success) {
+          updateStatus('保存済み', true);
+        } else {
+          updateStatus('保存失敗', false);
+        }
+      }
+
+      // ----- 初期化：ストレージから復元 -----
+      function initializeMemo() {
+        const savedContent = loadFromStorage();
+        textarea.value = savedContent;
+        updateStatus('保存済み', true);
+      }
+
+      // ----- メモを完全に消去 -----
+      function clearMemo() {
+        // 確認はシンプルな confirm で十分（確実に動作）
+        if (confirm('メモの内容をすべて削除しますか？\nこの操作は元に戻せません。')) {
+          textarea.value = '';
+          // 明示的に空文字を保存
+          const success = saveToStorage('');
+          if (success) {
+            updateStatus('消去しました', true);
+          } else {
+            updateStatus('消去に失敗', false);
+          }
+        }
+      }
+
+      // ----- イベントリスナー設定 -----
+      function bindEvents() {
+        // ユーザーが入力するたびに自動保存 (inputイベント)
+        textarea.addEventListener('input', function() {
+          // パフォーマンスのため直接保存（シンプルなテキストなので十分）
+          persistMemo();
+        });
+
+        // 消去ボタン
+        clearButton.addEventListener('click', clearMemo);
+
+        // ページを離れる直前にも念のため保存 (ただしinputで既に保存済み)
+        window.addEventListener('beforeunload', function() {
+          // 同期的に保存 (localStorageは同期的に動作)
+          saveToStorage(textarea.value);
+        });
+      }
+
+      // ----- 起動 -----
+      initializeMemo();
+      bindEvents();
+    })();
+  </script>
+</body>
+</html>
