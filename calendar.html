@@ -20,7 +20,7 @@
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       padding: 1rem;
       margin: 0;
-      touch-action: pan-y; /* 縦スクロールは許可、横スワイプはJSで制御 */
+      touch-action: pan-y;
     }
 
     .calendar-container {
@@ -36,6 +36,7 @@
       display: flex;
       flex-direction: column;
       gap: 1.2rem;
+      position: relative;
     }
 
     .header-row {
@@ -81,7 +82,6 @@
       box-shadow: 0 0 12px rgba(200, 160, 70, 0.3);
     }
 
-    /* 年月コントロール */
     .year-month-control {
       display: flex;
       align-items: center;
@@ -172,7 +172,6 @@
       text-shadow: 0 2px 6px rgba(0,0,0,0.5);
     }
 
-    /* カレンダーグリッド */
     .calendar-grid {
       background: rgba(18, 20, 28, 0.6);
       border-radius: 1.5rem;
@@ -202,6 +201,7 @@
     .day-cell {
       aspect-ratio: 1 / 1;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       font-size: 1.15rem;
@@ -212,6 +212,7 @@
       background: transparent;
       border: 1px solid transparent;
       user-select: none;
+      position: relative;
     }
 
     .day-cell:active {
@@ -236,6 +237,97 @@
       color: #fae6a8;
     }
 
+    /* メモがある日付のインジケーター */
+    .memo-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #f0d78c;
+      margin-top: 2px;
+      box-shadow: 0 0 5px rgba(220, 180, 70, 0.8);
+    }
+
+    /* メモポップアップ */
+    .memo-popup {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 85%;
+      max-width: 350px;
+      background: rgba(30, 33, 46, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 1.8rem;
+      padding: 1.5rem 1.3rem 1.2rem;
+      border: 1px solid rgba(220, 200, 140, 0.4);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+      z-index: 10;
+      display: none;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .memo-popup.visible {
+      display: flex;
+    }
+
+    .memo-popup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #ecd9b4;
+      font-weight: 500;
+      font-size: 1rem;
+      letter-spacing: 0.03em;
+    }
+
+    .memo-close-btn {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: #c0b28a;
+      font-size: 1.3rem;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.2s;
+      line-height: 1;
+    }
+
+    .memo-close-btn:hover {
+      background: rgba(220, 80, 80, 0.3);
+      color: #f5c6c6;
+    }
+
+    .memo-textarea {
+      width: 100%;
+      height: 80px;
+      background: rgba(18, 20, 28, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 1rem;
+      padding: 0.8rem;
+      color: #f0e4cc;
+      font-size: 0.95rem;
+      font-family: inherit;
+      resize: vertical;
+      outline: none;
+    }
+
+    .memo-textarea:focus {
+      border-color: rgba(210, 180, 110, 0.6);
+      box-shadow: 0 0 10px rgba(190, 150, 50, 0.2);
+    }
+
+    .memo-save-indicator {
+      font-size: 0.75rem;
+      color: #8e95ab;
+      text-align: right;
+    }
+
     @media (max-width: 450px) {
       .calendar-container {
         padding: 1.5rem 1rem;
@@ -255,22 +347,14 @@
   </style>
 </head>
 <body>
-  <div class="calendar-container">
+  <div class="calendar-container" id="calendarContainer">
     <div class="header-row">
-      <h1>
-        <span>📅</span> カレンダー
-      </h1>
-      <a href="index.html" class="home-button">
-        <span>🏠</span> ホーム
-      </a>
+      <h1><span>📅</span> カレンダー</h1>
+      <a href="index.html" class="home-button"><span>🏠</span> ホーム</a>
     </div>
 
-    <!-- 年月コントロール -->
     <div class="year-month-control">
-      <!-- 前月ボタン -->
       <button class="nav-button" id="prevMonthBtn" aria-label="前の月">◀</button>
-
-      <!-- 年表示＋上下矢印 -->
       <div class="year-selector">
         <span class="year-display" id="yearDisplay">2026</span>
         <div class="year-nav">
@@ -278,37 +362,44 @@
           <button class="year-arrow" id="yearDownBtn" aria-label="年を減らす">▼</button>
         </div>
       </div>
-
-      <!-- 月表示 -->
       <span class="month-display" id="monthDisplay">6月</span>
-
-      <!-- 次月ボタン -->
       <button class="nav-button" id="nextMonthBtn" aria-label="次の月">▶</button>
     </div>
 
-    <!-- カレンダー本体 -->
     <div class="calendar-grid" id="calendarGridContainer">
       <div class="weekdays">
         <div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div>
       </div>
       <div class="days-grid" id="daysGrid"></div>
     </div>
+
+    <!-- メモポップアップ -->
+    <div class="memo-popup" id="memoPopup">
+      <div class="memo-popup-header">
+        <span id="memoDateLabel">----年--月--日</span>
+        <button class="memo-close-btn" id="memoCloseBtn">✕</button>
+      </div>
+      <textarea class="memo-textarea" id="memoTextarea" placeholder="ひとことメモ..."></textarea>
+      <div class="memo-save-indicator" id="memoStatus">自動保存</div>
+    </div>
   </div>
 
   <script>
     (function() {
+      // ----- 定数 -----
+      const STORAGE_PREFIX = 'calendar_memo_';
+
       // ----- 状態 -----
       let currentYear, currentMonth;
+      let activeDate = null; // 現在ポップアップで編集中の日付 'YYYY-MM-DD'
 
-      // 今日の日付 (比較用)
       const today = new Date();
       const todayYear = today.getFullYear();
-      const todayMonth = today.getMonth(); // 0-11
+      const todayMonth = today.getMonth();
       const todayDate = today.getDate();
 
-      // 初期表示: 現在の年月
       currentYear = todayYear;
-      currentMonth = todayMonth; // 0-11
+      currentMonth = todayMonth;
 
       // ----- DOM要素 -----
       const yearDisplay = document.getElementById('yearDisplay');
@@ -318,68 +409,228 @@
       const nextMonthBtn = document.getElementById('nextMonthBtn');
       const yearUpBtn = document.getElementById('yearUpBtn');
       const yearDownBtn = document.getElementById('yearDownBtn');
-      const calendarContainer = document.querySelector('.calendar-grid'); // スワイプ検出用
+      const calendarGridContainer = document.getElementById('calendarGridContainer');
+      const memoPopup = document.getElementById('memoPopup');
+      const memoDateLabel = document.getElementById('memoDateLabel');
+      const memoTextarea = document.getElementById('memoTextarea');
+      const memoCloseBtn = document.getElementById('memoCloseBtn');
+      const memoStatus = document.getElementById('memoStatus');
 
-      // ----- 月名の配列 -----
       const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+
+      // ----- メモ保存/読込 -----
+      function getMemoKey(dateStr) {
+        return STORAGE_PREFIX + dateStr;
+      }
+
+      function loadMemo(dateStr) {
+        try {
+          return localStorage.getItem(getMemoKey(dateStr)) || '';
+        } catch (e) {
+          return '';
+        }
+      }
+
+      function saveMemo(dateStr, text) {
+        try {
+          if (text.trim() === '') {
+            localStorage.removeItem(getMemoKey(dateStr));
+          } else {
+            localStorage.setItem(getMemoKey(dateStr), text);
+          }
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
 
       // ----- カレンダー描画 -----
       function renderCalendar() {
-        // 表示更新
         yearDisplay.textContent = currentYear;
         monthDisplay.textContent = monthNames[currentMonth];
 
-        // 月の最初の日と最後の日
         const firstDay = new Date(currentYear, currentMonth, 1);
         const lastDay = new Date(currentYear, currentMonth + 1, 0);
-        const startDayOfWeek = firstDay.getDay(); // 0(日)～6(土)
+        const startDayOfWeek = firstDay.getDay();
         const daysInMonth = lastDay.getDate();
-
-        // 前月の末日（空セル用）
         const prevMonthLastDate = new Date(currentYear, currentMonth, 0).getDate();
 
         daysGrid.innerHTML = '';
 
-        // カレンダーセルを生成 (最大6週間 = 42セル)
-        // 先頭の空セル
+        // 前月の空セル
         for (let i = startDayOfWeek - 1; i >= 0; i--) {
           const day = prevMonthLastDate - i;
-          const cell = createDayCell(day, true);
+          const cell = createDayCell(day, true, null);
           daysGrid.appendChild(cell);
         }
 
         // 当月の日付
         for (let d = 1; d <= daysInMonth; d++) {
-          const cell = createDayCell(d, false);
+          const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          const cell = createDayCell(d, false, dateStr);
           daysGrid.appendChild(cell);
         }
 
-        // 残りの空セル (7の倍数になるまで)
+        // 残りの空セル
         const totalCells = Math.ceil((startDayOfWeek + daysInMonth) / 7) * 7;
         const remaining = totalCells - (startDayOfWeek + daysInMonth);
         for (let i = 1; i <= remaining; i++) {
-          const cell = createDayCell(i, true);
+          const cell = createDayCell(i, true, null);
           daysGrid.appendChild(cell);
         }
       }
 
-      function createDayCell(day, isEmpty) {
+      function createDayCell(day, isEmpty, dateStr) {
         const cell = document.createElement('div');
         cell.className = 'day-cell';
         if (isEmpty) {
           cell.classList.add('empty');
-          cell.textContent = day; // 前月/次月の日付も表示（薄く）
+          cell.textContent = day;
         } else {
           cell.textContent = day;
-          // 今日の日付ならハイライト
+          cell.dataset.date = dateStr;
+
+          // 今日のハイライト
           if (currentYear === todayYear && currentMonth === todayMonth && day === todayDate) {
             cell.classList.add('today');
           }
-          // 今後のメモ機能用: data属性に日付情報を持たせる
-          cell.dataset.date = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+          // メモがある場合はドット表示
+          const memo = loadMemo(dateStr);
+          if (memo.trim() !== '') {
+            const dot = document.createElement('div');
+            dot.className = 'memo-dot';
+            cell.appendChild(dot);
+          }
+
+          // 長押しイベント
+          cell.addEventListener('touchstart', handleTouchStart, { passive: false });
+          cell.addEventListener('touchend', handleTouchEnd);
+          cell.addEventListener('touchmove', handleTouchMove, { passive: false });
+          cell.addEventListener('mousedown', handleMouseDown);
+          cell.addEventListener('mouseup', handleMouseUp);
+          cell.addEventListener('mouseleave', handleMouseLeave);
         }
         return cell;
       }
+
+      // ----- 長押し検出 (共通) -----
+      let longPressTimer = null;
+      let longPressTriggered = false;
+      let startX = 0, startY = 0;
+      const LONG_PRESS_DURATION = 600; // ms
+
+      function clearLongPress() {
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
+        longPressTriggered = false;
+      }
+
+      function startLongPress(e, dateStr) {
+        clearLongPress();
+        longPressTriggered = false;
+        const coords = getEventCoords(e);
+        startX = coords.x;
+        startY = coords.y;
+        longPressTimer = setTimeout(() => {
+          longPressTriggered = true;
+          openMemoPopup(dateStr);
+        }, LONG_PRESS_DURATION);
+      }
+
+      function moveLongPress(e) {
+        if (!longPressTimer) return;
+        const coords = getEventCoords(e);
+        const diffX = Math.abs(coords.x - startX);
+        const diffY = Math.abs(coords.y - startY);
+        // 一定以上動いたらキャンセル
+        if (diffX > 10 || diffY > 10) {
+          clearLongPress();
+        }
+      }
+
+      function endLongPress(e) {
+        clearLongPress();
+      }
+
+      function getEventCoords(e) {
+        if (e.touches) {
+          return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+        return { x: e.clientX, y: e.clientY };
+      }
+
+      // タッチイベント
+      function handleTouchStart(e) {
+        e.preventDefault(); // スクロール抑止
+        const dateStr = e.currentTarget.dataset.date;
+        startLongPress(e, dateStr);
+      }
+      function handleTouchMove(e) {
+        e.preventDefault();
+        moveLongPress(e);
+      }
+      function handleTouchEnd(e) {
+        endLongPress(e);
+      }
+
+      // マウスイベント
+      function handleMouseDown(e) {
+        const dateStr = e.currentTarget.dataset.date;
+        startLongPress(e, dateStr);
+      }
+      function handleMouseMove(e) {
+        moveLongPress(e);
+      }
+      function handleMouseUp(e) {
+        endLongPress(e);
+      }
+      function handleMouseLeave(e) {
+        clearLongPress();
+      }
+
+      // グローバルなマウス移動/アップも監視 (セル外でも解除)
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+
+      // ----- メモポップアップ -----
+      function openMemoPopup(dateStr) {
+        activeDate = dateStr;
+        const [y, m, d] = dateStr.split('-');
+        memoDateLabel.textContent = `${y}年${m}月${d}日`;
+        memoTextarea.value = loadMemo(dateStr);
+        memoStatus.textContent = '自動保存';
+        memoPopup.classList.add('visible');
+
+        // フォーカス
+        setTimeout(() => memoTextarea.focus(), 100);
+      }
+
+      function closeMemoPopup() {
+        memoPopup.classList.remove('visible');
+        activeDate = null;
+        // カレンダー再描画でメモドット更新
+        renderCalendar();
+      }
+
+      memoCloseBtn.addEventListener('click', closeMemoPopup);
+
+      // ポップアップ外クリックで閉じる (カレンダーグリッド部分)
+      calendarGridContainer.addEventListener('click', function(e) {
+        if (memoPopup.classList.contains('visible') && !memoPopup.contains(e.target)) {
+          closeMemoPopup();
+        }
+      });
+
+      // メモ入力の自動保存
+      memoTextarea.addEventListener('input', function() {
+        if (!activeDate) return;
+        const text = memoTextarea.value;
+        const success = saveMemo(activeDate, text);
+        memoStatus.textContent = success ? '保存済み' : '保存失敗';
+      });
 
       // ----- 月移動 -----
       function goToPrevMonth() {
@@ -389,6 +640,7 @@
         } else {
           currentMonth--;
         }
+        closeMemoPopup();
         renderCalendar();
       }
 
@@ -399,50 +651,51 @@
         } else {
           currentMonth++;
         }
+        closeMemoPopup();
         renderCalendar();
       }
 
       function changeYear(delta) {
         currentYear += delta;
+        closeMemoPopup();
         renderCalendar();
       }
 
-      // ----- スワイプ検出 -----
-      let touchStartX = 0;
-      let touchEndX = 0;
-      const SWIPE_THRESHOLD = 50; // ピクセル
+      // ----- スワイプ検出 (月移動) -----
+      let swipeStartX = 0;
+      let swipeEndX = 0;
+      const SWIPE_THRESHOLD = 50;
 
-      function handleTouchStart(e) {
-        touchStartX = e.changedTouches[0].screenX;
-      }
+      calendarGridContainer.addEventListener('touchstart', function(e) {
+        swipeStartX = e.changedTouches[0].screenX;
+      }, { passive: true });
 
-      function handleTouchEnd(e) {
-        touchEndX = e.changedTouches[0].screenX;
-        const diffX = touchEndX - touchStartX;
+      calendarGridContainer.addEventListener('touchend', function(e) {
+        swipeEndX = e.changedTouches[0].screenX;
+        const diffX = swipeEndX - swipeStartX;
         if (Math.abs(diffX) > SWIPE_THRESHOLD) {
           if (diffX > 0) {
-            // 右スワイプ → 前の月
             goToPrevMonth();
           } else {
-            // 左スワイプ → 次の月
             goToNextMonth();
           }
         }
-      }
+      }, { passive: true });
 
-      // ----- イベント設定 -----
+      // ----- ボタンイベント -----
       prevMonthBtn.addEventListener('click', goToPrevMonth);
       nextMonthBtn.addEventListener('click', goToNextMonth);
       yearUpBtn.addEventListener('click', () => changeYear(1));
       yearDownBtn.addEventListener('click', () => changeYear(-1));
 
-      // スワイプ: カレンダーグリッド全体で検出
-      const gridElement = document.getElementById('calendarGridContainer');
-      gridElement.addEventListener('touchstart', handleTouchStart, { passive: true });
-      gridElement.addEventListener('touchend', handleTouchEnd, { passive: true });
-
-      // キーボード操作（オプション）
+      // キーボード
       document.addEventListener('keydown', (e) => {
+        if (memoPopup.classList.contains('visible')) {
+          if (e.key === 'Escape') {
+            closeMemoPopup();
+          }
+          return;
+        }
         if (e.key === 'ArrowLeft') {
           e.preventDefault();
           goToPrevMonth();
